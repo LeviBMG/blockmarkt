@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Blockmarkt – Minecraft Shop</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f1efe8;--card:#fff;--tx:#1d1d1b;--mu:#6b6a63;--ac:#1fa88f;--ac2:#3b2a4f;--bd:#d9d6ca}
+:root:not([data-theme="light"]){}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#16161a;--card:#222228;--tx:#eceae2;--mu:#9b9a92;--ac:#33d1b3;--ac2:#b9a3e0;--bd:#37373f}}
+:root[data-theme="dark"]{--bg:#16161a;--card:#222228;--tx:#eceae2;--mu:#9b9a92;--ac:#33d1b3;--ac2:#b9a3e0;--bd:#37373f}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--card);border-bottom:2px solid var(--bd);display:flex;gap:10px;align-items:center;padding:10px 14px;flex-wrap:wrap}
+.logo{font-weight:800;font-size:19px;letter-spacing:.5px}
+.logo span{color:var(--ac)}
+input,select,textarea,button{font:inherit;color:var(--tx)}
+input,select,textarea{background:var(--bg);border:2px solid var(--bd);border-radius:4px;padding:8px 10px;width:100%}
+#q{flex:1;min-width:140px;width:auto}
+.seg{display:flex;border:2px solid var(--bd);border-radius:4px;overflow:hidden}
+.seg button{border:0;background:none;padding:7px 10px;cursor:pointer}
+.seg button.on{background:var(--ac);color:#06241e;font-weight:700}
+.btn{background:var(--ac);color:#06241e;border:0;border-radius:4px;padding:9px 14px;font-weight:700;cursor:pointer}
+.btn.alt{background:none;border:2px solid var(--bd);color:var(--tx)}
+.btn:disabled{opacity:.5}
+main{max-width:1100px;margin:0 auto;padding:14px}
+nav.cats{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px}
+nav.cats button{white-space:nowrap;border:2px solid var(--bd);background:var(--card);border-radius:20px;padding:6px 12px;cursor:pointer}
+nav.cats button.on{background:var(--ac2);color:var(--bg);border-color:var(--ac2)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:12px;margin-top:12px}
+.card{background:var(--card);border:2px solid var(--bd);border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.card .ic{font-size:38px;line-height:1}
+.card h3{margin:0;font-size:15px}
+.card p{margin:0;color:var(--mu);font-size:13px;flex:1}
+.price{font-weight:700;color:var(--ac)}
+.card.svc{grid-column:span 2}
+@media(max-width:420px){.card.svc{grid-column:span 1}}
+.qty{display:flex;align-items:center;gap:6px}
+.qty button{width:28px;height:28px;border:2px solid var(--bd);background:none;border-radius:4px;cursor:pointer}
+.panel{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.55);display:none;justify-content:flex-end}
+.panel.open{display:flex}
+.sheet{background:var(--bg);width:min(440px,100%);height:100%;overflow:auto;padding:16px;padding-top:calc(16px + env(safe-area-inset-top,0px));padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+.row{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd)}
+.tot{font-size:18px;font-weight:800;margin:12px 0}
+label{display:block;margin:10px 0 4px;font-size:13px;color:var(--mu)}
+.badge{background:#e5484d;color:#fff;border-radius:10px;padding:1px 7px;font-size:12px;margin-left:4px}
+.ord{background:var(--card);border:2px solid var(--bd);border-radius:6px;padding:10px;margin:10px 0}
+.ord.new{border-color:var(--ac)}
+pre{white-space:pre-wrap;background:var(--card);border:2px solid var(--bd);padding:10px;border-radius:4px}
+.hide{display:none!important}
+.note{color:var(--mu);font-size:13px}
+</style></head><body>
+<header>
+ <div class="logo">⛏ Block<span>markt</span></div>
+ <input id="q" placeholder="Items suchen…">
+ <div class="seg" id="cur"><button data-c="dia" class="on">💎 Diamanten</button><button data-c="net">🟫 Netherit</button></div>
+  <button class="btn" id="cartBtn">🛒 Warenkorb (<span id="n">0</span>)</button>
+</header>
+<main>
+ <nav class="cats" id="cats"></nav>
+ <div class="grid" id="grid"></div>
+ <p class="note" style="margin-top:20px">Wechselkurs: <span id="rate"></span>. Beträge werden auf ganze Einheiten aufgerundet.</p>
+</main>
+
+<div class="panel" id="cartP"><div class="sheet">
+ <div class="row"><b>Dein Warenkorb</b><button class="btn alt" data-close>✕</button></div>
+ <div id="cartL"></div>
+ <div class="tot" id="tot"></div>
+ <label>Minecraft-Name *</label><input id="mc" placeholder="z. B. Steve123">
+ <label>Treffpunkt / Koordinaten (optional)</label><input id="co" placeholder="X Y Z oder Ort">
+ <label>Nachricht (optional)</label><textarea id="msg" rows="2"></textarea>
+ <p class="note">Bezahlung: Lege den Betrag in der gewählten Währung beim Treffpunkt in eine Kiste, ich liefere nach Zahlungseingang.</p>
+ <button class="btn" id="send" style="width:100%">Bestellung abschicken</button>
+ <div id="res"></div>
+</div></div>
+
+<div class="panel" id="svcP"><div class="sheet">
+ <div class="row"><b id="svcT">Dienstleistung anfragen</b><button class="btn alt" data-close>✕</button></div>
+ <p class="note" id="svcD"></p>
+ <label>Minecraft-Name *</label><input id="smc">
+ <label>Was genau soll ich tun? *</label><textarea id="sdesc" rows="4" placeholder="Größe, Stil, Ort, Deadline …"></textarea>
+ <label>Dein Preisvorschlag (optional, in Diamanten)</label><input id="sbid" type="number" min="0">
+ <button class="btn" id="ssend" style="width:100%;margin-top:12px">Anfrage senden</button>
+ <div id="sres"></div>
+</div></div>
+
+
+<script>
+const RATE=20,SCRAP=5,PM=1.1; // 20 💎 = 1 Barren, 5 💎 = 1 Schrott, PM = Preisaufschlag (+10 %)
+const CATS=["Alle","Blöcke","Werkzeuge","Rüstung","Waffen","Essen & Tränke","Redstone","Selten","Tausch","Dienstleistungen"];
+// [id,Kategorie,Icon,Name,Beschreibung,Preis in Diamanten pro Einheit]
+const ITEMS=[
+["b1","Blöcke","🪨","Stack Stein (64)","Glatter Stein, ideal zum Bauen",1],
+["b2","Blöcke","🪵","Stack Eichenholz (64)","Holzplanken oder Stämme",1],
+["b3","Blöcke","🔲","Stack Glas (64)","Klar und stabil",2],
+["b4","Blöcke","🧱","Stack Ziegel (64)","Rote Ziegel",2],
+["b5","Blöcke","🪨","Stack Tiefenschiefer (64)","Dunkel, schick für Keller und Dächer",2],
+["b6","Blöcke","🟨","Stack Sandstein (64)","Glatt oder gemeißelt",1],
+["b7","Blöcke","⬛","Obsidian x16","Für Portale und Schutz",4],
+["b8","Blöcke","⬜","Stack Quarzblöcke (64)","Edel und hell",3],
+["b9","Blöcke","🔷","Stack Prismarin (64)","Ozeanmonument-Stil",4],
+["b10","Blöcke","🟧","Stack Terrakotta (64)","Alle Farben möglich",2],
+["b11","Blöcke","🟦","Stack Beton (64)","Farbe frei wählbar",2],
+["b12","Blöcke","🧶","Stack Wolle (64)","Farbe frei wählbar",2],
+["b13","Blöcke","🟥","Stack Netherziegel (64)","Rot und düster",2],
+["b14","Blöcke","🟨","Stack Endsteinziegel (64)","Hell und selten",3],
+["b15","Blöcke","📚","Bücherregale x16","Für Bibliotheken und Zaubertische",4],
+["b16","Blöcke","💡","Glowstone x32","Gutes Licht",3],
+["b17","Blöcke","🟠","Stack Kupferblöcke (64)","Oxidiert nach Wunsch",4],
+["b18","Blöcke","🌿","Stack Moos & Laub (64)","Für Gärten und Dächer",1],
+["t1","Werkzeuge","⛏","Diamant-Spitzhacke","Verzaubert: Effizienz V, Haltbarkeit III",8],
+["t2","Werkzeuge","🪓","Diamant-Axt","Effizienz V, Haltbarkeit III",8],
+["t3","Werkzeuge","⛏","Netherit-Spitzhacke","Effizienz V, Glück III, Reparatur",28],
+["t4","Werkzeuge","🎣","Angel","Glück des Meeres III, Köder III",5],
+["r1","Rüstung","🛡","Diamant-Rüstung","Kompletter Satz, Schutz IV",24],
+["r2","Rüstung","🛡","Netherit-Rüstung","Kompletter Satz, Schutz IV, Reparatur",104],
+["r3","Rüstung","🥾","Elytra","Mit Reparatur",30],
+["w1","Waffen","🗡","Diamant-Schwert","Schärfe V, Plünderung III",10],
+["w2","Waffen","🗡","Netherit-Schwert","Schärfe V, Plünderung III, Reparatur",30],
+["w3","Waffen","🏹","Bogen","Stärke V, Unendlichkeit",8],
+["f1","Essen & Tränke","🍖","Stack Steak (64)","Gegrillt",3],
+["f2","Essen & Tränke","🍎","Goldene Äpfel x8","Gold-Äpfel",12],
+["f3","Essen & Tränke","🧪","Trank der Stärke x3","Verlängert",6],
+["d1","Redstone","🔴","Stack Redstone (64)","Staub",2],
+["d2","Redstone","📦","Trichter x16","Für Item-Systeme",4],
+["d3","Redstone","🧲","Kolben x8","Normale und klebrige gemischt",6],
+["s1","Selten","🐉","Drachenei","Einzigartig",64],
+["s2","Selten","🔱","Dreizack","Loyalität III, Reparatur",20],
+["s3","Selten","🧡","Totem der Unsterblichkeit","Lebensretter",15],
+["v1","Dienstleistungen","🏠","Hausbau","Ich baue dir ein Haus nach deinen Wünschen",40,"ab"],
+["v2","Dienstleistungen","🌾","Farm bauen","Eisengolem-, Mob- oder Getreidefarm",30,"ab"],
+["v3","Dienstleistungen","⚔","Begleitschutz","Ich begleite dich in Nether, End oder Mine",10,"ab"],
+["v4","Dienstleistungen","⛏","Ressourcen farmen","Ich sammle, was du brauchst",15,"ab"],
+["v5","Dienstleistungen","🧰","Eigener Wunsch","Etwas anderes? Schreib mir einfach",5,"ab"]
+];
+const $=s=>document.querySelector(s);
+let cat="Alle",cur="dia",cart={},db=null,isOwner=false,U=null;
+const CUS={};const byId=id=>id[0]==="c"?CUS[id]:ITEMS.find(i=>i[0]===id);
+const P=i=>i[5]===0?0:Math.max(1,Math.floor(i[5]*PM+1e-9));
+function nth(d){let b=Math.floor(d/RATE+1e-9),s=Math.ceil((d-b*RATE)/SCRAP-1e-9);if(s>=4){b++;s=0}return[b,s]}
+function fmt(d){if(cur==="dia")return +d.toFixed(1)+" 💎";const[b,s]=nth(d);return[b&&b+" 🟫",s&&s+" 🔸"].filter(Boolean).join(" + ")||"0"}
+function fmtLong(d){if(cur==="dia")return Math.ceil(d-1e-9)+" Diamanten";const[b,s]=nth(d);return[b&&b+" Netherit-Barren",s&&s+" Netherit-Schrott"].filter(Boolean).join(" + ")||"0"}
+$("#rate").textContent=RATE+" Diamanten = 1 Netherit-Barren, "+SCRAP+" Diamanten = 1 Netherit-Schrott (4 Schrott = 1 Barren)";
+$("#cats").innerHTML=CATS.map(c=>`<button data-c="${c}" class="${c===cat?"on":""}">${c}</button>`).join("");
+$("#cats").onclick=e=>{const c=e.target.dataset.c;if(!c)return;cat=c;[...$("#cats").children].forEach(b=>b.classList.toggle("on",b.dataset.c===c));render()};
+$("#cur").onclick=e=>{const c=e.target.dataset.c;if(!c)return;cur=c;[...$("#cur").children].forEach(b=>b.classList.toggle("on",b.dataset.c===c));render();drawCart()};
+$("#q").oninput=render;
+const SW=()=>`<div class="card svc" style="grid-column:1/-1"><h3>✍ Sonderwunsch (${cat})</h3><p>Nicht gefunden, was du suchst? Schreib genau auf, was du willst. Den Preis sprechen wir danach ab.</p><textarea id="swt" rows="2" placeholder="z. B. 3 Stacks Sculk, Schild mit eigenem Banner …"></textarea><button class="btn" data-sw="1">Zum Warenkorb hinzufügen</button></div>`;
+const TRADE=`<div class="card svc" style="grid-column:1/-1"><div class="ic">🔄</div><h3>Tausch: Diamanten gegen Netherit</h3><p>${RATE} 💎 = 1 Netherit-Barren · ${SCRAP} 💎 = 1 Netherit-Schrott</p>
+<label>Du bekommst</label><select id="tt"><option value="b">Netherit-Barren</option><option value="s">Netherit-Schrott</option></select>
+<label>Anzahl</label><input id="tn" type="number" min="1" value="1"><p class="price" id="tc"></p>
+<label>Minecraft-Name *</label><input id="tmc"><label>Treffpunkt (optional)</label><input id="tco">
+<button class="btn" data-trade="1" style="margin-top:10px">Tausch anfragen</button><div id="tres"></div></div>`;
+function calc(){if(!$("#tn"))return 0;const n=Math.max(1,Math.floor(+$("#tn").value)||1),c=n*($("#tt").value==="b"?RATE:SCRAP);$("#tc").textContent="Du zahlst: "+c+" Diamanten";return c}
+async function tradeSend(btn){const name=$("#tmc").value.trim();if(!name){$("#tres").innerHTML="<p>Bitte Minecraft-Namen eintragen.</p>";return}
+ const n=Math.max(1,Math.floor(+$("#tn").value)||1),b=$("#tt").value==="b",c=calc();
+ await submit({kind:"trade",name,where:$("#tco").value.trim(),msg:"",ts:Date.now(),status:"neu",items:[{n,t:"Tausch: "+(b?"Netherit-Barren":"Netherit-Schrott")}],pay:c+" Diamanten"},$("#tres"),btn)}
+$("#grid").oninput=e=>{if(e.target.id==="tn"||e.target.id==="tt")calc()};
+function render(){
+ const q=$("#q").value.toLowerCase();
+ if(cat==="Tausch"){$("#grid").innerHTML=TRADE;calc();return}
+ $("#grid").innerHTML=ITEMS.filter(i=>(cat==="Alle"||i[1]===cat)&&(i[3]+i[4]).toLowerCase().includes(q)).map(i=>{
+  const svc=i[1]==="Dienstleistungen";
+  return `<div class="card ${svc?"svc":""}"><div class="ic">${i[2]}</div><h3>${i[3]}</h3><p>${i[4]}</p><div class="price">${i[6]?"ab ":""}${fmt(P(i))}</div>
+  <button class="btn" data-${svc?"svc":"add"}="${i[0]}">${svc?"Anfragen":"In den Warenkorb"}</button></div>`}).join("")+SW();
+}
+$("#grid").onclick=e=>{
+ if(e.target.dataset.sw){const t=$("#swt").value.trim();if(!t)return;const k="c"+Date.now();CUS[k]=[k,cat,"✍","Sonderwunsch ("+cat+"): "+t,"",0];cart[k]=1;$("#swt").value="";drawCart();return}
+ if(e.target.dataset.trade){tradeSend(e.target);return}
+ const a=e.target.dataset.add,s=e.target.dataset.svc;
+ if(a){cart[a]=(cart[a]||0)+1;drawCart()}
+ if(s){const i=byId(s);$("#svcT").textContent=i[3]+" anfragen";$("#svcD").textContent=i[4]+" (Richtpreis ab "+fmtLong(P(i))+")";$("#svcP").dataset.id=s;$("#sres").innerHTML="";open("svcP")}};
+function open(id){$("#"+id).classList.add("open")}
+document.addEventListener("click",e=>{if(e.target.hasAttribute&&e.target.hasAttribute("data-close")||e.target.classList.contains("panel"))document.querySelectorAll(".panel").forEach(p=>p.classList.remove("open"))});
+$("#cartBtn").onclick=()=>{drawCart();open("cartP")};
+function total(){return Object.entries(cart).reduce((s,[id,n])=>s+P(byId(id))*n,0)}
+function drawCart(){
+ const ids=Object.keys(cart);$("#n").textContent=ids.reduce((s,i)=>s+cart[i],0);
+ $("#cartL").innerHTML=ids.length?ids.map(id=>{const i=byId(id);return `<div class="row"><span>${i[2]} ${i[3]}</span><span class="qty"><button data-m="${id}">−</button>${cart[id]}<button data-p="${id}">+</button></span><span class="price">${i[5]===0?"n. Absprache":fmt(P(i)*cart[id])}</span></div>`}).join(""):"<p class='note'>Dein Warenkorb ist leer.</p>";
+ $("#tot").textContent="Gesamt: "+fmtLong(total());
+}
+$("#cartL").onclick=e=>{const m=e.target.dataset.m,p=e.target.dataset.p;if(p)cart[p]++;if(m){cart[m]--;if(cart[m]<=0)delete cart[m]}drawCart()};
+function summary(o){return `Bestellung von ${o.name}\n`+o.items.map(i=>`${i.n}x ${i.t}`).join("\n")+`\nZahlung: ${o.pay}\nTreffpunkt: ${o.where||"-"}\n${o.msg||""}`}
+async function submit(o,resEl,btn){
+ resEl.innerHTML="";btn.disabled=true;
+ try{
+  const r=await fetch("/api/order",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(o)});if(!r.ok)throw 0;
+  resEl.innerHTML=`<p><b>✅ Bestellung gesendet!</b> Ich wurde benachrichtigt und melde mich im Spiel bei dir.</p><pre>${esc(summary(o))}</pre>`;
+  return true;
+ }catch(err){
+  resEl.innerHTML=`<p><b>⚠ Direkt senden hat nicht geklappt.</b> Kopiere die Bestellung und schick sie mir per Discord oder Chat:</p><pre>${esc(summary(o))}</pre>`;
+ }finally{btn.disabled=false}
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+$("#send").onclick=async()=>{
+ const name=$("#mc").value.trim();
+ if(!name||!Object.keys(cart).length){$("#res").innerHTML="<p>Bitte Minecraft-Namen eintragen und etwas in den Warenkorb legen.</p>";return}
+ const d=total(),o={kind:"order",name,where:$("#co").value.trim(),msg:$("#msg").value.trim(),ts:Date.now(),status:"neu",
+  items:Object.entries(cart).map(([id,n])=>({n,t:byId(id)[3]})),pay:fmtLong(d)+(Object.keys(cart).some(k=>k[0]==="c")?" + Sonderwünsche (Preis nach Absprache)":"")};
+ if(await submit(o,$("#res"),$("#send"))){cart={};drawCart()}
+};
+$("#ssend").onclick=async()=>{
+ const name=$("#smc").value.trim(),desc=$("#sdesc").value.trim(),i=byId($("#svcP").dataset.id);
+ if(!name||!desc){$("#sres").innerHTML="<p>Name und Beschreibung ausfüllen.</p>";return}
+ const bid=$("#sbid").value;
+ const o={kind:"service",name,msg:desc,ts:Date.now(),status:"neu",items:[{n:1,t:"Service: "+i[3]}],pay:bid?bid+" Diamanten (Vorschlag)":"Preis nach Absprache, ab "+fmtLong(P(i))};
+ await submit(o,$("#sres"),$("#ssend"));
+};
+render();drawCart();
+</script></body></html>
